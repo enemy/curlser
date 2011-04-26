@@ -39,6 +39,7 @@ class Curlser
     @working_dir = opts[:working_dir] ? opts[:working_dir] : "curlser"
     @follow_redirects = opts[:follow_redirects] ? true : false
     @debug = opts[:debug] ? true : false
+    @insecure = opts[:insecure] ? true : false
     
     FileUtils.mkdir_p @working_dir
   end
@@ -87,6 +88,7 @@ class Curlser
     csrf_param = build_csrf_param unless method == "GET"
     
     verbose_mode = "-v" if @debug
+    insecure_mode = "-k" if @insecure
     
     # -s silent, -S show errors with silent
     # -L follow redirects
@@ -97,7 +99,7 @@ class Curlser
     
     redirect_behaviour = "-L --post302" if @follow_redirects
 
-    command = "curl #{verbose_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@working_dir}/cookie-jar -b #{@working_dir}/cookie-jar -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
+    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@working_dir}/cookie-jar -b #{@working_dir}/cookie-jar -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
     puts command if @debug
     output = `#{command}`
 
