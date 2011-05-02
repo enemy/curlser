@@ -25,15 +25,84 @@ class Curlser
     end
   end
   
+  class Cookie
+  
+    attr_reader :httponly, :domain, :tailmatch, :path, :secure, :expires, :name, :value
+
+    def initialize(opts)
+      @httponly = opts[:httponly]
+      @domain = opts[:domain]
+      @tailmatch = opts[:tailmatch]
+      @path = opts[:path]
+      @secure = opts[:secure]
+      @expires = opts[:expires]
+      @name = opts[:name]
+      @value = opts[:value]     
+    end
+
+    
+    # static char *get_netscape_format(const struct Cookie *co)
+    # {
+    #   return aprintf(
+    #     "%s"     /* httponly preamble */
+    #     "%s%s\t" /* domain */
+    #     "%s\t"   /* tailmatch */
+    #     "%s\t"   /* path */
+    #     "%s\t"   /* secure */
+    #     "%" FORMAT_OFF_T "\t"   /* expires */
+    #     "%s\t"   /* name */
+    #     "%s",    /* value */
+    
+    def self.parse(netscape_format_line)
+      matches = netscape_format_line.scan(/(\S+)/)
+      matches.flatten!
+      
+      httponly_preamble, domain = matches[0].split("_")
+      
+      new({:httponly => httponly_preamble,
+           :domain => domain,
+           :tailmatch => matches[1],
+           :path => matches[2],
+           :secure => matches[3],
+           :expires => matches[4],
+           :name => matches[5],
+           :value => matches[6]
+           })    
+    end
+  end
+  
+  class CookieJar
+    
+    attr_reader :cookies
+    
+    def initialize(cookiejar_contents = "")
+      @cookies = {}
+      
+      lines = cookiejar_contents.split("\n")
+
+      # skip header
+      4.times { lines.shift }
+      
+      lines.each do |line|
+        cookie = Cookie.parse(line)
+        @cookies[cookie.name] = cookie
+      end
+          
+    end
+    
+  end
+  
+  
   require 'fileutils'
 
-  attr_reader :responses
+  attr_reader :responses, :cookie_jar
   
   def initialize(base_url, opts={})
     
     @request_counter = 0
     @csrf_token = nil
-    @responses = []
+    @responses = []    
+    @cookie_jar = CookieJar.new
     
     @base_url = base_url    
     @working_dir = opts[:working_dir] ? opts[:working_dir] : "curlser"
@@ -107,6 +176,9 @@ class Curlser
     response.method = method
     response.path = path
     response.for_request_number = @request_counter
+    
+    cookie_jar_contents = File.read("#{@working_dir}/cookie-jar")
+    @cookie_jar = CookieJar.new(cookie_jar_contents)
     
     return response
   end
