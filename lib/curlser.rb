@@ -73,10 +73,17 @@ class Curlser
   
   class CookieJar
     
-    attr_reader :cookies
+    attr_reader :cookies, :cookie_jar_file_path
     
-    def initialize(cookiejar_contents = "")
+    def initialize(cookie_jar_file_path)
       @cookies = {}
+      @cookie_jar_file_path = cookie_jar_file_path
+      
+      cookiejar_contents = if File.exists?(@cookie_jar_file_path)
+        File.read(@cookie_jar_file_path)
+      else
+        ""
+      end
       
       lines = cookiejar_contents.split("\n")
 
@@ -88,6 +95,17 @@ class Curlser
         @cookies[cookie.name] = cookie
       end
           
+    end
+    
+    def delete_cookies!
+      if File.exists? @cookie_jar_file_path
+        FileUtils.rm(@cookie_jar_file_path)
+        return true
+      else
+        return false
+      end
+      
+      @cookies = {}
     end
     
   end
@@ -102,15 +120,17 @@ class Curlser
     @request_counter = 0
     @csrf_token = nil
     @responses = []    
-    @cookie_jar = CookieJar.new
     
     @base_url = base_url    
     @working_dir = opts[:working_dir] ? opts[:working_dir] : "curlser"
     @follow_redirects = opts[:follow_redirects] ? true : false
     @debug = opts[:debug] ? true : false
     @insecure = opts[:insecure] ? true : false
-    
+
     FileUtils.mkdir_p @working_dir
+    
+    @cookie_jar_file_path = "#{@working_dir}/cookie_jar"
+    @cookie_jar = CookieJar.new(@cookie_jar_file_path)
   end
 
 
@@ -168,7 +188,7 @@ class Curlser
     
     redirect_behaviour = "-L --post302" if @follow_redirects
 
-    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@working_dir}/cookie-jar -b #{@working_dir}/cookie-jar -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
+    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@cookie_jar_file_path} -b #{@cookie_jar_file_path} -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
     puts command if @debug
     output = `#{command}`
 
@@ -177,8 +197,8 @@ class Curlser
     response.path = path
     response.for_request_number = @request_counter
     
-    cookie_jar_contents = File.read("#{@working_dir}/cookie-jar")
-    @cookie_jar = CookieJar.new(cookie_jar_contents)
+
+    @cookie_jar = CookieJar.new(@cookie_jar.cookie_jar_file_path)
     
     return response
   end
