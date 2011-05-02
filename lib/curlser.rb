@@ -97,7 +97,7 @@ class Curlser
           
     end
     
-    def delete_cookies!
+    def delete!
       if File.exists? @cookie_jar_file_path
         FileUtils.rm(@cookie_jar_file_path)
         return true
