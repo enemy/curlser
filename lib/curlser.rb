@@ -124,6 +124,8 @@ class Curlser
     @base_url = base_url    
     @working_dir = opts[:working_dir] ? opts[:working_dir] : "curlser"
     @follow_redirects = opts[:follow_redirects] ? true : false
+    @follow_redirects_with_posts = opts[:follow_redirects_with_posts] ? true : false
+    
     @debug = opts[:debug] ? true : false
     @insecure = opts[:insecure] ? true : false
 
@@ -186,7 +188,8 @@ class Curlser
     # -c store cookies in this file
     # -b submit cookies from this file
     
-    redirect_behaviour = "-L --post302" if @follow_redirects
+    redirect_behaviour = "-L" if @follow_redirects
+    redirect_behaviour = "-L --post302" if @follow_redirects_with_posts
 
     command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@cookie_jar_file_path} -b #{@cookie_jar_file_path} -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
     puts command if @debug
