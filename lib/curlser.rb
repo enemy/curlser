@@ -120,8 +120,17 @@ class Curlser
     @request_counter = 0
     @csrf_token = nil
     @responses = []    
-    
+
     @base_url = base_url    
+    
+    @http_basic_auth = nil
+    
+    if ( basic_auth_matched = @base_url.match("^http[s]?://([^\:]*)\:([^\@]*)@")  )
+      @http_basic_auth = { :user => basic_auth_matched[1],
+                           :password => basic_auth_matched[2] }
+    end
+    
+    
     @working_dir = opts[:working_dir] ? opts[:working_dir] : "curlser"
     @follow_redirects = opts[:follow_redirects] ? true : false
     @follow_redirects_with_posts = opts[:follow_redirects_with_posts] ? true : false
@@ -191,7 +200,9 @@ class Curlser
     redirect_behaviour = "-L" if @follow_redirects
     redirect_behaviour = "-L --post302" if @follow_redirects_with_posts
 
-    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@cookie_jar_file_path} -b #{@cookie_jar_file_path} -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
+    http_basic_auth = "-u #{@http_basic_auth[:user]}:#{@http_basic_auth[:password]}" if @http_basic_auth
+    
+    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@cookie_jar_file_path} -b #{@cookie_jar_file_path} #{http_basic_auth} -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
     puts command if @debug
     output = `#{command}`
 
