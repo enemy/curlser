@@ -152,17 +152,17 @@ class Curlser
     find_and_save_csrf_from(response_with_body.body)
   end
   
-  def post(path, params, body = "")
+  def post(path, params = {}, body = "")
     response = request("POST", path, params, body)
     save_response_with_body(response)
   end
   
-  def put(path, params, body = "")
+  def put(path, params = {}, body = "")
     response = request("PUT", path, params, body)
     save_response_with_body(response)
   end
 
-  def delete(path, params, body = "")
+  def delete(path, params = {}, body = "")
     response = request("DELETE", path, params, body)
     save_response_with_body(response)
   end
