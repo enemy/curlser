@@ -168,6 +168,10 @@ class Curlser
   end
 
 
+  def delete_all_responses!
+    FileUtils.rm(Dir.glob("#{@working_dir}/response_*"))
+  end
+
   private
   
   def save_response_with_body(response)
