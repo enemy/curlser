@@ -193,7 +193,7 @@ class Curlser
 
     data_params = build_data_params_and_from(params, body)
     
-    if body == "" && method != "GET"
+    if body == "" && data_params == "" && method != "GET"
       zero_content_length_header = "--header 'Content-Length: 0'"
     end
     
