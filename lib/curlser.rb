@@ -171,7 +171,14 @@ class Curlser
   private
   
   def save_response_with_body(response)
-    body = File.read("#{@working_dir}/response_#{@request_counter}")
+    response_file_when_output = "#{@working_dir}/response_#{@request_counter}"
+    
+    if File.exists? response_file_when_output
+      body = File.read(response_file_when_output)
+    else
+      body = ""
+    end
+    
     response.body = body
     
     @responses << response
