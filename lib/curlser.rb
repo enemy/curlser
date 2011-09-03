@@ -220,7 +220,9 @@ class Curlser
 
     http_basic_auth = "-u #{@http_basic_auth[:user]}:#{@http_basic_auth[:password]}" if @http_basic_auth
 
-    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w '%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}' -c #{@cookie_jar_file_path} -b #{@cookie_jar_file_path} #{http_basic_auth} #{zero_content_length_header} -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
+    write_out = '"%{http_code} %{num_connects} %{num_redirects} %{url_effective} %{content_type}"'
+
+    command = "curl #{verbose_mode} #{insecure_mode} -s -S #{redirect_behaviour} -e ';auto' -w #{write_out} -c #{@cookie_jar_file_path} -b #{@cookie_jar_file_path} #{http_basic_auth} #{zero_content_length_header} -X #{method} #{data_params} #{csrf_param} -o #{@working_dir}/response_#{@request_counter} #{url}"
     puts command if @debug
     output = `#{command}`
 
